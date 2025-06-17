@@ -1,31 +1,44 @@
+import os
 import streamlit as st
 from groq import Groq
 
-client = Groq(api_key="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")
+# Set your API key securely
+client = Groq(api_key=os.environ.get("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"))
 
-# Streamlit UI
-st.set_page_config(page_title="Groq Chatbot", layout="centered")
-st.title("🧠 Groq Chatbot")
-st.caption("Ask anything, powered by `compound-beta` model")
+st.set_page_config(page_title="Groq Assistant", layout="centered")
+st.title("🛠️ Groq Assistant Tool")
+st.caption("Switch between a Code Debugger and a Web Search Assistant using `compound-beta-mini`")
 
-# Text input
-user_input = st.text_area("Enter your message", height=100, placeholder="e.g., What is the current weather in Tokyo?")
+# Tool selector
+tool_mode = st.radio("Select Tool Mode", ["🔍 Web Search Tool", "🐍 Code Debugger Tool"], horizontal=True)
 
-if st.button("Submit") and user_input.strip() != "":
-    with st.spinner("Thinking..."):
+# Prompt input
+default_query = {
+    "🔍 Web Search Tool": "What are common causes of 'CrashLoopBackOff' errors in Kubernetes?",
+    "🐍 Code Debugger Tool": "Will this code throw an error? `a = [1, 2]; print(a[5])`"
+}
+
+query_input = st.text_area("Enter your query:", value=default_query[tool_mode], height=150)
+
+# Set system message based on tool
+system_prompt = {
+    "🔍 Web Search Tool": "You are a web assistant who answers based on up-to-date internet knowledge. Search if needed.",
+    "🐍 Code Debugger Tool": "You are a code assistant who helps debug code and explain errors. Execute if needed."
+}[tool_mode]
+
+if st.button("Submit Query"):
+    with st.spinner(f"Running {tool_mode}..."):
         try:
-            completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": user_input}],
-                model="compound-beta"
+            response = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": query_input}
+                ],
+                model="compound-beta-mini"
             )
-            response = completion.choices[0].message.content
-            st.markdown("### 🤖 Response:")
-            st.write(response)
-            
-            # Optionally show tool calls (if any)
-            if hasattr(completion.choices[0].message, "executed_tools"):
-                st.markdown("### 🛠️ Tool Calls:")
-                st.json(completion.choices[0].message.executed_tools)
+
+            st.markdown("### 🤖 Groq Response")
+            st.write(response.choices[0].message.content)
 
         except Exception as e:
-            st.error(f"An error occurred: {e}")
+            st.error(f"Failed to fetch response: {e}")
