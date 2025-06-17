@@ -40,7 +40,7 @@ st.markdown('<div class="subtitle">Ask anything', unsafe_allow_html=True)
 # User input
 with st.form("chat_form"):
     user_input = st.text_area("💬 Your Question", height=120)
-    submitted = st.form_submit_button("🚀 Ask Groq")
+    submitted = st.form_submit_button("🚀 Submit")
 
 # If user submitted input
 if submitted and user_input.strip() != "":
