@@ -1,44 +1,64 @@
-import os
 import streamlit as st
 from groq import Groq
+import os
 
-# Set your API key securely
+# Setup Groq client
 client = Groq(api_key="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")
 
-st.set_page_config(page_title="Groq Assistant", layout="centered")
-st.title("🛠️ Groq Assistant Tool")
-st.caption("Switch between a Code Debugger and a Web Search Assistant using `compound-beta-mini`")
+# Streamlit page config
+st.set_page_config(page_title="Agentic AI Powered", layout="centered")
+st.markdown(
+    """
+    <style>
+    .big-title {
+        font-size: 32px;
+        font-weight: 700;
+        text-align: center;
+        color: #4a7cfc;
+    }
+    .subtitle {
+        text-align: center;
+        font-size: 18px;
+        color: gray;
+        margin-bottom: 2rem;
+    }
+    .response-box {
+        background-color: #f4f6fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid #d3d3d3;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Tool selector
-tool_mode = st.radio("Select Tool Mode", ["🔍 Web Search Tool", "🐍 Code Debugger Tool"], horizontal=True)
+# Title and subtitle
+st.markdown('<div class="big-title">🧠 Agentic AI Assistant</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Ask anything', unsafe_allow_html=True)
 
-# Prompt input
-default_query = {
-    "🔍 Web Search Tool": "What are common causes of 'CrashLoopBackOff' errors in Kubernetes?",
-    "🐍 Code Debugger Tool": "Will this code throw an error? `a = [1, 2]; print(a[5])`"
-}
+# User input
+with st.form("chat_form"):
+    user_input = st.text_area("💬 Your Question", height=120)
+    submitted = st.form_submit_button("🚀 Ask Groq")
 
-query_input = st.text_area("Enter your query:", value=default_query[tool_mode], height=150)
-
-# Set system message based on tool
-system_prompt = {
-    "🔍 Web Search Tool": "You are a web assistant who answers based on up-to-date internet knowledge. Search if needed.",
-    "🐍 Code Debugger Tool": "You are a code assistant who helps debug code and explain errors. Execute if needed."
-}[tool_mode]
-
-if st.button("Submit Query"):
-    with st.spinner(f"Running {tool_mode}..."):
+# If user submitted input
+if submitted and user_input.strip() != "":
+    with st.spinner("🧠 Thinking..."):
         try:
-            response = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": query_input}
-                ],
-                model="compound-beta-mini"
+            completion = client.chat.completions.create(
+                messages=[{"role": "user", "content": user_input}],
+                model="compound-beta"
             )
+            response = completion.choices[0].message.content
 
-            st.markdown("### 🤖 Groq Response")
-            st.write(response.choices[0].message.content)
+            st.markdown("### 🤖 Groq's Response")
+            st.markdown(f'<div class="response-box">{response}</div>', unsafe_allow_html=True)
+
+            # Optional tool call display
+            if hasattr(completion.choices[0].message, "executed_tools"):
+                st.markdown("### 🛠️ Tool Calls Used")
+                st.json(completion.choices[0].message.executed_tools)
 
         except Exception as e:
-            st.error(f"Failed to fetch response: {e}")
+            st.error(f"⚠️ Error: {e}")
