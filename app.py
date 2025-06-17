@@ -3,7 +3,7 @@ import streamlit as st
 from groq import Groq
 
 # Set your API key securely
-client = Groq(api_key=os.environ.get("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"))
+client = Groq(api_key="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")
 
 st.set_page_config(page_title="Groq Assistant", layout="centered")
 st.title("🛠️ Groq Assistant Tool")
